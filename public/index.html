@@ -94,7 +94,6 @@
       function getUpdate(updated, self) {
         
         if (self.status !== 200) return;
-        
         const json = JSON.parse(self.responseText);
         let content = json.entry.content.$t;
         

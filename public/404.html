@@ -93,6 +93,7 @@
       
       function getUpdate(updated, self) {
         
+        if (self.status !== 200) return;
         const json = JSON.parse(self.responseText);
         let content = json.entry.content.$t;
         
@@ -135,6 +136,8 @@
       }
       
       function checkUpdate() {
+        
+        if (this.status !== 200) return;
         
         const json = JSON.parse(this.responseText);
         const updated = (new Date(json.entry.updated.$t)).getTime();
