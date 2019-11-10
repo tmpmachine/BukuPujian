@@ -1,0 +1,262 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+  
+  <title>BukuPujian</title>
+  <meta name='viewport' content='width=device-width, initial-scale=1, maximum-scale=1'>
+  <meta name="mobile-web-app-capable" content="yes">
+  
+  <meta charset='utf-8'/>
+  <meta content='Kumpulan lirik dan chord lagu rohani Kristen. Gabung LINE Square : BukuPujian Square.' name='Description'/>
+  <meta content='Kumpulan lirik dan chord lagu rohani Kristen. Gabung LINE Square : BukuPujian Square.' property='og:description'/>
+  <meta content='BukuPujian' property='og:title'/>
+  <meta content='notranslate' name='google'/>
+  <meta content='/images/share.jpeg' property='og:image'/>
+
+</head>
+<body>
+
+  <template>
+    <img src='/images/share.jpeg'/>
+  </template>
+
+  <div id="download-wrapper">
+    <div class="spinner spinner3"></div>
+  </div>
+  
+  <style>
+    #download-wrapper {
+      position: relative;
+      display: flex;
+      justify-content: center;
+      height: 4rem;
+      margin: 1rem 1rem 0;
+      padding-top: 1.2rem;
+      background: rgba(#fff, .2);
+    }
+    #download-wrapper::after {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      padding: 0.2rem;
+      text-align: center;
+      font-size: 0.6em;
+      font-family: sans-serif;
+      font-weight: bold;
+      color: #777;
+    }
+    #download-wrapper.download::after { content:'Downloading'; }
+    #download-wrapper.failed::after { content:'Failed. Please refresh page.'; }
+    
+    .spinner {
+      width: 1rem;
+      height: 1rem;
+    }
+    .spinner3 {
+      border-top: 3px solid rgba(0,0,0,.5);
+      border-right: 3px solid transparent;
+      border-radius: 50%;
+      animation: rotation .8s linear infinite;
+    }
+    
+    @keyframes rotation{
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
+    }
+  </style>
+
+
+
+
+  <script src="/arcade-lsdb.js"></script>
+  <script>
+    // main app handler
+    const arc7 = new arclsdb('arc7', {
+      root: {
+        updated: 0,
+        homepageHTML: ''
+      }
+    });
+    
+    
+    (function() {
+      
+      const hostId = '3452803447674356264';
+      const entryId = '7955135248859935575';
+      
+      document.getElementById('download-wrapper').setAttribute('class', 'download');
+      
+      function getUpdate(updated, self) {
+        
+        if (self.status !== 200) return;
+        
+        const json = JSON.parse(self.responseText);
+        let content = json.entry.content.$t;
+        
+        content = content.split("<a name='more'></a> bbb");
+        content.splice(0, 1);
+        content = content.join("<a name='more'></a> bbb");
+        
+        arc7.data.homepageHTML = content.substring(397+5, content.length-6).replace(/<br \/>/g,'\n');
+        
+        if (arc7.data.updated === 0) {
+          
+          arc7.data.updated = updated;
+          arc7.save();
+          location.href = location.href;
+        } else {
+          
+          if (typeof(clientUpdateHandler) === 'undefined') {
+            if (window.confirm('App updated. Reload?')) {
+              arc7.data.updated = updated;
+              arc7.save();
+              location.href = location.href;
+            }
+          } else {
+            
+            let waitTimer = 0;
+            let waiter = setInterval(function() {
+              
+              if (typeof(clientUpdateHandler.swo) !== 'undefined' || waitTimer === 30) {
+                
+                clientUpdateHandler(null, function() {
+                  arc7.data.updated = updated;
+                  arc7.save();
+                });
+                clearInterval(waiter);
+              }
+              waitTimer++;
+            }, 100);
+          }
+        }
+      }
+      
+      function checkUpdate() {
+        
+        if (this.status !== 200) return;
+        
+        const json = JSON.parse(this.responseText);
+        const updated = (new Date(json.entry.updated.$t)).getTime();
+        
+        if (updated > arc7.data.updated) {
+          
+          const xhr = new XMLHttpRequest();
+          const maxDownloaded = Number(json.entry.summary.$t);
+          xhr.open('GET', 'https://www.blogger.com/feeds/'+hostId+'/posts/default/'+entryId+'?alt=json&rand='+Math.random());
+          xhr.onload = () => {
+            getUpdate(updated, xhr);
+          };
+          xhr.onprogress = function(event) {
+            if (document.getElementById('download-wrapper'))
+              document.getElementById('download-wrapper').textContent = '(' + Math.min(maxDownloaded, Math.floor(event.loaded / 10) / 100) + ' / ' + maxDownloaded + ' kb)';
+          };
+          xhr.send();
+        }
+      }
+      
+      // check for update
+      let xhr = new XMLHttpRequest();
+      xhr.open('GET', 'https://www.blogger.com/feeds/'+hostId+'/posts/summary/'+entryId+'?alt=json&rand='+Math.random());
+      xhr.onload = checkUpdate;
+      xhr.send();
+      
+      // display app UI
+      if (arc7.data.homepageHTML.length > 0)
+      	document.body.innerHTML = '';
+
+      document.open();
+      const head = arc7.data.homepageHTML.match(/<head>(\s|\S)*?<\/head>/);
+      document.write(arc7.data.homepageHTML.replace(/<head>(\s|\S)*?<\/head>/,''));
+      if (head)
+        document.head.innerHTML = head[0].substring(6,head[0].length-7);
+      document.close();
+
+    })();
+  
+    
+    // service worker handler
+    if (typeof(navigator) !== 'undefined' && 'serviceWorker' in navigator)
+    {
+      navigator.serviceWorker.addEventListener('controllerchange',function() {
+        location.href = location.href;
+      });
+      
+      navigator.serviceWorker.register('/sw.js').then(function(swo) {
+        if (!navigator.serviceWorker.controller)
+          return
+    
+        if (swo.waiting)
+        {
+          if (typeof(clientUpdateHandler) === 'undefined')
+          {
+            if (window.confirm('App updated. Reload?'))
+            {
+              swo.waiting.postMessage({action: 'skipWaiting'});
+              location.href = location.href;
+            }
+          }
+          else
+          {
+            clientUpdateHandler(swo);
+            clientUpdateHandler.swo = swo;
+          }
+          
+          return
+        }
+    
+        if (swo.installing)
+        {
+          swo.installing.addEventListener('statechange',function(e) {
+            if (swo.installing.state == 'installed')
+            {
+              if (typeof(clientUpdateHandler) === 'undefined')
+              {
+                if (window.confirm('App updated. Reload?'))
+                {
+                  swo.waiting.postMessage({action: 'skipWaiting'});
+                  location.href = location.href;
+                }
+              }
+              else
+              {
+                clientUpdateHandler(swo);
+                clientUpdateHandler.swo = swo;
+              }
+            }
+          })
+          return
+        }
+        
+        swo.addEventListener('updatefound',function() {
+          swo.installing.addEventListener('statechange',function(e) {
+            if (this.state == 'installed')
+            {
+              if (typeof(clientUpdateHandler) === 'undefined')
+              {
+                if (window.confirm('App updated. Reload?'))
+                {
+                  swo.waiting.postMessage({action: 'skipWaiting'});
+                  location.href = location.href;
+                }
+              }
+              else
+              {
+                clientUpdateHandler(swo);
+                clientUpdateHandler.swo = swo;
+              }
+            }
+          })
+        })
+      }).catch(function(e) {
+        console.error('Something went wrong.')
+      });
+    }
+  </script>
+
+</body>
+</html>
