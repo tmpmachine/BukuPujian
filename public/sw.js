@@ -1,10 +1,9 @@
-
 self.addEventListener('message', function(e) {
   if (e.data.action == 'skipWaiting')
     self.skipWaiting();
 });
 
-var cacheVersion = '0.141';
+var cacheVersion = '0.143';
 var cacheItem = 'bukupujian-v'+cacheVersion;
 
 self.addEventListener('install', function(event) {
@@ -12,8 +11,6 @@ self.addEventListener('install', function(event) {
     '/',
     '/404.html',
     '/manifest.json',
-    '/firebase-messaging-sw.js',
-    '/arcade-lsdb.js',
     '/images/128.png',
     '/images/128ap.png',
     '/images/192.png',
@@ -56,8 +53,7 @@ self.addEventListener('activate', function(e) {
 });
 
 self.addEventListener('fetch', function(e) {
-  if (e.request.url.indexOf('song/') > 0)
-  {
+  if (e.request.url.indexOf('song/') > 0) {
     e.respondWith(
       caches.match(e.request.url.split('song/')[0]).then(function(resp) {
         if (resp)
@@ -70,9 +66,7 @@ self.addEventListener('fetch', function(e) {
         });
       })
     );
-  }
-  else
-  {
+  } else {
     e.respondWith(
       caches.match(e.request).then(function(resp) {
         if (resp)

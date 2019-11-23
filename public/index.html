@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html>
 <head>
@@ -8,8 +7,8 @@
   <meta name="mobile-web-app-capable" content="yes">
   
   <meta charset='utf-8'/>
-  <meta content='Kumpulan lirik dan chord lagu rohani Kristen. Gabung LINE Square : BukuPujian Square.' name='Description'/>
-  <meta content='Kumpulan lirik dan chord lagu rohani Kristen. Gabung LINE Square : BukuPujian Square.' property='og:description'/>
+  <meta content='Aplikasi web untuk blog BukuPujian. Kumpulan lirik dan chord lagu rohani Kristen.' name='Description'/>
+  <meta content='Aplikasi web untuk blog BukuPujian. Kumpulan lirik dan chord lagu rohani Kristen.' property='og:description'/>
   <meta content='BukuPujian' property='og:title'/>
   <meta content='notranslate' name='google'/>
   <meta content='/images/share.jpeg' property='og:image'/>
@@ -71,9 +70,10 @@
   </style>
 
 
-
-
-  <script src="/arcade-lsdb.js"></script>
+  <script>
+    /* LSDB v0.091 */
+    (function () { const lsdb = function(storageName, rootObject) { this.root = JSON.parse(JSON.stringify(rootObject)); this.storageName = storageName; this.data = JSON.parse(getStorageData(this.storageName, null)); this.deepCheck(this.data, rootObject.root, true); }; lsdb.prototype.deepCheck = function(data, root, firstDive) { if (data === null) { this.data = JSON.parse(JSON.stringify(this.root.root)); } else { for (const i in data) { if (root[i] === undefined) delete data[i]; } for (const i in root) { if (data[i] === undefined) data[i] = root[i]; } for (const i in data) { if (Array.isArray(data[i])) { for (let j = 0; j < data[i].length; j++) { if (typeof(data[i][j]) === 'object' && !Array.isArray(data[i][j])) { if (this.root[i] !== undefined) this.deepCheck(data[i][j], this.root[i]); } } } else { if (!(data[i] === null || data[i] === undefined) && typeof(data[i]) === 'object' && !Array.isArray(data[i])) { if (firstDive) this.deepCheck(data[i], this.root.root[i], false); else this.deepCheck(data[i], root[i], firstDive); } } } } }; lsdb.prototype.save = function() { window.localStorage.setItem(this.storageName, JSON.stringify(this.data)); }; lsdb.prototype.reset = function() { window.localStorage.removeItem(this.storageName); this.data = JSON.parse(JSON.stringify(this.root.root)); }; lsdb.prototype.new = function(keyName, values) { const data = JSON.parse(JSON.stringify(this.root[keyName])); for (const i in values) data[i] = values[i]; return data; }; function getStorageData(name, defaultValue) { return (!window.localStorage.getItem(name)) ? defaultValue : window.localStorage.getItem(name); } if (window.arclsdb === undefined) window.arclsdb = lsdb; else console.error('lsdb.js:', 'Failed to initialize. Duplicate variable exists.'); })();
+  </script>
   <script>
     // main app handler
     const arc7 = new arclsdb('arc7', {
@@ -93,6 +93,7 @@
       
       function getUpdate(updated, self) {
         
+        if (self.status !== 200) return;
         const json = JSON.parse(self.responseText);
         let content = json.entry.content.$t;
         
@@ -122,11 +123,11 @@
               
               if (typeof(clientUpdateHandler.swo) !== 'undefined' || waitTimer === 30) {
                 
-                clientUpdateHandler(null, function() {
-                  arc7.data.updated = updated;
-                  arc7.save();
-                });
+                arc7.data.updated = updated;
+                arc7.save();
+                clientUpdateHandler(null);
                 clearInterval(waiter);
+                
               }
               waitTimer++;
             }, 100);
@@ -161,23 +162,25 @@
       xhr.onload = checkUpdate;
       xhr.send();
       
+      
       // display app UI
-      if (arc7.data.homepageHTML.length > 0)
+      if (arc7.data.homepageHTML.length > 0) {
+      	
       	document.body.innerHTML = '';
 
-      document.open();
-      const head = arc7.data.homepageHTML.match(/<head>(\s|\S)*?<\/head>/);
-      document.write(arc7.data.homepageHTML.replace(/<head>(\s|\S)*?<\/head>/,''));
-      if (head)
-        document.head.innerHTML = head[0].substring(6,head[0].length-7);
-      document.close();
+        document.open();
+        const head = arc7.data.homepageHTML.match(/<head>(\s|\S)*?<\/head>/);
+        document.write(arc7.data.homepageHTML.replace(/<head>(\s|\S)*?<\/head>/,''));
+        if (head)
+          document.head.innerHTML = head[0].substring(6,head[0].length-7);
+        document.close();
+      }
 
     })();
   
     
     // service worker handler
-    if (typeof(navigator) !== 'undefined' && 'serviceWorker' in navigator)
-    {
+    if (typeof(navigator) !== 'undefined' && 'serviceWorker' in navigator) {
       navigator.serviceWorker.addEventListener('controllerchange',function() {
         location.href = location.href;
       });
@@ -186,18 +189,13 @@
         if (!navigator.serviceWorker.controller)
           return
     
-        if (swo.waiting)
-        {
-          if (typeof(clientUpdateHandler) === 'undefined')
-          {
-            if (window.confirm('App updated. Reload?'))
-            {
+        if (swo.waiting) {
+          if (typeof(clientUpdateHandler) === 'undefined') {
+            if (window.confirm('App updated. Reload?')) {
               swo.waiting.postMessage({action: 'skipWaiting'});
               location.href = location.href;
             }
-          }
-          else
-          {
+          } else {
             clientUpdateHandler(swo);
             clientUpdateHandler.swo = swo;
           }
@@ -205,21 +203,15 @@
           return
         }
     
-        if (swo.installing)
-        {
+        if (swo.installing) {
           swo.installing.addEventListener('statechange',function(e) {
-            if (swo.installing.state == 'installed')
-            {
-              if (typeof(clientUpdateHandler) === 'undefined')
-              {
-                if (window.confirm('App updated. Reload?'))
-                {
+            if (swo.installing.state == 'installed') {
+              if (typeof(clientUpdateHandler) === 'undefined') {
+                if (window.confirm('App updated. Reload?')) {
                   swo.waiting.postMessage({action: 'skipWaiting'});
                   location.href = location.href;
                 }
-              }
-              else
-              {
+              } else {
                 clientUpdateHandler(swo);
                 clientUpdateHandler.swo = swo;
               }
@@ -230,18 +222,13 @@
         
         swo.addEventListener('updatefound',function() {
           swo.installing.addEventListener('statechange',function(e) {
-            if (this.state == 'installed')
-            {
-              if (typeof(clientUpdateHandler) === 'undefined')
-              {
-                if (window.confirm('App updated. Reload?'))
-                {
+            if (this.state == 'installed') {
+              if (typeof(clientUpdateHandler) === 'undefined') {
+                if (window.confirm('App updated. Reload?')) {
                   swo.waiting.postMessage({action: 'skipWaiting'});
                   location.href = location.href;
                 }
-              }
-              else
-              {
+              } else {
                 clientUpdateHandler(swo);
                 clientUpdateHandler.swo = swo;
               }
