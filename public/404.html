@@ -137,6 +137,8 @@
       
       function checkUpdate() {
         
+        if (this.status !== 200) return;
+        
         const json = JSON.parse(this.responseText);
         const updated = (new Date(json.entry.updated.$t)).getTime();
         
