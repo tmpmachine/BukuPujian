@@ -3,7 +3,7 @@ self.addEventListener('message', function(e) {
     self.skipWaiting();
 });
 
-var cacheVersion = '0.143';
+var cacheVersion = '0.14';
 var cacheItem = 'bukupujian-v'+cacheVersion;
 
 self.addEventListener('install', function(event) {

@@ -79,6 +79,8 @@
     const arc7 = new arclsdb('arc7', {
       root: {
         updated: 0,
+        appVersion: 0,
+        modules: {},
         homepageHTML: ''
       }
     });
@@ -87,35 +89,36 @@
     (function() {
       
       const hostId = '3452803447674356264';
-      const entryId = '7955135248859935575';
+      const entryId = '4322951597139426918';
+      // const entryId = '7955135248859935575';
       
       document.getElementById('download-wrapper').setAttribute('class', 'download');
       
-      function getUpdate(updated, self) {
+      function getUpdate() {
         
-        if (self.status !== 200) return;
-        const json = JSON.parse(self.responseText);
-        let content = json.entry.content.$t;
+        if (this.status !== 200) return;
         
-        content = content.split("<a name='more'></a> bbb");
-        content.splice(0, 1);
+        let json = JSON.parse(this.responseText);
+        let content = json.entry.content.$t.split("<a name='more'></a> bbb");
+        let appData = JSON.parse(content.splice(0, 1));
         content = content.join("<a name='more'></a> bbb");
         
         arc7.data.homepageHTML = content.substring(397+5, content.length-6).replace(/<br \/>/g,'\n');
         
-        if (arc7.data.updated === 0) {
-          
-          arc7.data.updated = updated;
+        if (arc7.data.appVersion == 0) {
+          arc7.data.appVersion = appData.appVersion;
           arc7.save();
           location.href = location.href;
         } else {
           
           if (typeof(clientUpdateHandler) === 'undefined') {
+            
             if (window.confirm('App updated. Reload?')) {
-              arc7.data.updated = updated;
+              arc7.data.appVersion = appData.appVersion;
               arc7.save();
               location.href = location.href;
             }
+            
           } else {
             
             let waitTimer = 0;
@@ -123,7 +126,7 @@
               
               if (typeof(clientUpdateHandler.swo) !== 'undefined' || waitTimer === 30) {
                 
-                arc7.data.updated = updated;
+                arc7.data.appVersion = appData.appVersion;
                 arc7.save();
                 clientUpdateHandler(null);
                 clearInterval(waiter);
@@ -131,7 +134,9 @@
               }
               waitTimer++;
             }, 100);
+            
           }
+          
         }
       }
       
@@ -139,23 +144,22 @@
         
         if (this.status !== 200) return;
         
-        const json = JSON.parse(this.responseText);
-        const updated = (new Date(json.entry.updated.$t)).getTime();
+        let json = JSON.parse(this.responseText);
+        let appData = JSON.parse(json.entry.summary.$t);
         
-        if (updated > arc7.data.updated) {
-          
-          const xhr = new XMLHttpRequest();
-          const maxDownloaded = Number(json.entry.summary.$t);
+        if (arc7.data.appVersion < appData.appVersion) {
+          let xhr = new XMLHttpRequest();
           xhr.open('GET', 'https://www.blogger.com/feeds/'+hostId+'/posts/default/'+entryId+'?alt=json&rand='+Math.random());
-          xhr.onload = () => {
-            getUpdate(updated, xhr);
-          };
+          xhr.onload = getUpdate;
           xhr.onprogress = function(event) {
             if (document.getElementById('download-wrapper'))
-              document.getElementById('download-wrapper').textContent = '(' + Math.min(maxDownloaded, Math.floor(event.loaded / 10) / 100) + ' / ' + maxDownloaded + ' kb)';
+              document.getElementById('download-wrapper').textContent = '(' + Math.min(appData.appSize, Math.floor(event.loaded / 10) / 100) + ' / ' + appData.appSize + ' KB)';
           };
           xhr.send();
         }
+        
+        arc7.data.modules = appData.modules;
+        arc7.save();
       }
       
       // check for update
