@@ -3,11 +3,11 @@ self.addEventListener('message', function(e) {
     self.skipWaiting();
 });
 
-var cacheVersion = '0.141';
-var cacheItem = 'bukupujian-v'+cacheVersion;
+let cacheVersion = '0.16';
+let cacheItem = 'bukupujian-v'+cacheVersion;
 
 self.addEventListener('install', function(event) {
-  var urls = [
+  let urls = [
     '/',
     '/404.html',
     '/manifest.json',
@@ -29,8 +29,7 @@ self.addEventListener('install', function(event) {
     'https://fonts.gstatic.com/s/telex/v6/ieVw2Y1fKWmIO-faDVtSKA.woff2',
     'https://fonts.gstatic.com/s/telex/v6/ieVw2Y1fKWmIO-fUDVs.woff2',
     
-    'https://fonts.googleapis.com/icon?family=Material+Icons',
-    'https://fonts.gstatic.com/s/materialicons/v47/flUhRq6tzZclQEJ-Vdg-IuiaDsNcIhQ8tQ.woff2',
+    'https://bukupujian.web.app/fonts/flUhRq6tzZclQEJ-Vdg-IuiaDsNc.woff2',
     ];
  
   event.waitUntil(
